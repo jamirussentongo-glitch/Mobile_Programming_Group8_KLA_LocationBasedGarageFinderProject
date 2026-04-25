@@ -5,18 +5,28 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ndejje.garagelocationfinder.ui.viewmodel.AuthState
+import com.ndejje.garagelocationfinder.ui.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onSignupClick: () -> Unit
+    onSignupClick: () -> Unit,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val authState by viewModel.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            onLoginSuccess()
+            viewModel.resetState()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -30,55 +40,40 @@ fun LoginScreen(
         
         OutlinedTextField(
             value = email,
-            onValueChange = { 
-                email = it
-                errorMessage = null
-            },
+            onValueChange = { email = it },
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = errorMessage != null
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
         
         OutlinedTextField(
             value = password,
-            onValueChange = { 
-                password = it
-                errorMessage = null
-            },
+            onValueChange = { password = it },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-            isError = errorMessage != null
+            modifier = Modifier.fillMaxWidth()
         )
-        
-        if (errorMessage != null) {
+
+        if (authState is AuthState.Error) {
             Text(
-                text = errorMessage!!,
+                text = (authState as AuthState.Error).message,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 8.dp).align(Alignment.Start)
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
         
         Button(
-            onClick = {
-                if (email.isBlank() || password.isBlank()) {
-                    errorMessage = "Please fill in all fields"
-                } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    errorMessage = "Please enter a valid email"
-                } else if (password.length < 6) {
-                    errorMessage = "Password must be at least 6 characters"
-                } else {
-                    // For demo purposes, any valid email and 6+ char password works
-                    onLoginSuccess()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+            onClick = { viewModel.login(email, password) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = authState !is AuthState.Loading
         ) {
-            Text("Login")
+            if (authState is AuthState.Loading) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+            } else {
+                Text("Login")
+            }
         }
         
         TextButton(onClick = onSignupClick) {
@@ -90,12 +85,20 @@ fun LoginScreen(
 @Composable
 fun SignupScreen(
     onSignupSuccess: () -> Unit,
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val authState by viewModel.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            onSignupSuccess()
+            viewModel.resetState()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -109,66 +112,48 @@ fun SignupScreen(
         
         OutlinedTextField(
             value = name,
-            onValueChange = { 
-                name = it
-                errorMessage = null
-            },
+            onValueChange = { name = it },
             label = { Text("Full Name") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = errorMessage != null
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
         
         OutlinedTextField(
             value = email,
-            onValueChange = { 
-                email = it
-                errorMessage = null
-            },
+            onValueChange = { email = it },
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = errorMessage != null
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
         
         OutlinedTextField(
             value = password,
-            onValueChange = { 
-                password = it
-                errorMessage = null
-            },
+            onValueChange = { password = it },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-            isError = errorMessage != null
+            modifier = Modifier.fillMaxWidth()
         )
 
-        if (errorMessage != null) {
+        if (authState is AuthState.Error) {
             Text(
-                text = errorMessage!!,
+                text = (authState as AuthState.Error).message,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 8.dp).align(Alignment.Start)
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
         
         Button(
-            onClick = {
-                if (name.isBlank() || email.isBlank() || password.isBlank()) {
-                    errorMessage = "Please fill in all fields"
-                } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    errorMessage = "Please enter a valid email"
-                } else if (password.length < 6) {
-                    errorMessage = "Password must be at least 6 characters"
-                } else {
-                    onSignupSuccess()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+            onClick = { viewModel.signup(name, email, password) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = authState !is AuthState.Loading
         ) {
-            Text("Sign Up")
+            if (authState is AuthState.Loading) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+            } else {
+                Text("Sign Up")
+            }
         }
 
         TextButton(onClick = onLoginClick) {

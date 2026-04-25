@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
@@ -108,3 +109,19 @@ fun MainApp() {
 }
 
 data class BottomNavItem(val label: String, val route: String, val icon: ImageVector)
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun MainAppPreview() {
+    GarageLocationFinderTheme {
+        MainApp()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    GarageLocationFinderTheme {
+        LoginScreen(onLoginSuccess = {}, onSignupClick = {})
+    }
+}

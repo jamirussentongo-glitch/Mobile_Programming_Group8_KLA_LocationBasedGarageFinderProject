@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.ndejje.garagelocationfinder.data.local.GarageDao
 import com.ndejje.garagelocationfinder.data.local.GarageDatabase
+import com.ndejje.garagelocationfinder.data.local.UserDao
 import com.ndejje.garagelocationfinder.data.remote.GarageApi
 import dagger.Module
 import dagger.Provides
@@ -25,11 +26,16 @@ object AppModule {
             context,
             GarageDatabase::class.java,
             "garage_db"
-        ).build()
+        )
+        .fallbackToDestructiveMigration() // Added to handle database version changes during development
+        .build()
     }
 
     @Provides
     fun provideGarageDao(db: GarageDatabase): GarageDao = db.garageDao()
+
+    @Provides
+    fun provideUserDao(db: GarageDatabase): UserDao = db.userDao()
 
     @Provides
     @Singleton
