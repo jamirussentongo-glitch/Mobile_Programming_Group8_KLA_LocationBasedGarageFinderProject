@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,12 +33,19 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Garage Finder") },
-                actions = {
-                    TextButton(onClick = { isMapView = !isMapView }) {
-                        Text(if (isMapView) "Switch to List" else "Switch to Map")
-                    }
-                }
+                title = { Text("Garage Finder") }
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { isMapView = !isMapView },
+                icon = { 
+                    Icon(
+                        if (isMapView) Icons.Default.List else Icons.Default.LocationOn, 
+                        contentDescription = null
+                    ) 
+                },
+                text = { Text(if (isMapView) "Show List" else "Show Map") }
             )
         }
     ) { padding ->
@@ -60,10 +69,12 @@ fun HomeScreen(
                 }
             }
 
-            if (isMapView) {
-                MapContent(filteredGarages, onGarageClick)
-            } else {
-                ListContent(filteredGarages, onGarageClick)
+            Box(modifier = Modifier.weight(1f)) {
+                if (isMapView) {
+                    MapContent(filteredGarages, onGarageClick)
+                } else {
+                    ListContent(filteredGarages, onGarageClick)
+                }
             }
         }
     }
@@ -103,24 +114,21 @@ fun ListContent(garages: List<Garage>, onGarageClick: (String) -> Unit) {
 fun MapContent(garages: List<Garage>, onGarageClick: (String) -> Unit) {
     val kampala = LatLng(0.3476, 32.5825)
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(kampala, 13f)
+        position = CameraPosition.fromLatLngZoom(kampala, 12f)
     }
-
-    val mapProperties by remember { mutableStateOf(MapProperties(isMyLocationEnabled = true)) }
-    val uiSettings by remember { mutableStateOf(MapUiSettings(myLocationButtonEnabled = true)) }
 
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
-        properties = mapProperties,
-        uiSettings = uiSettings
+        properties = MapProperties(isMyLocationEnabled = false), // Set to false for simplicity unless permission is handled
+        uiSettings = MapUiSettings(zoomControlsEnabled = true)
     ) {
         garages.forEach { garage ->
             Marker(
                 state = MarkerState(position = LatLng(garage.latitude, garage.longitude)),
                 title = garage.name,
-                snippet = "Rating: ${garage.rating} | ${garage.services.take(2).joinToString(", ")}",
-                onInfoWindowClick = { marker -> 
+                snippet = garage.address,
+                onInfoWindowClick = {
                     onGarageClick(garage.id)
                 }
             )
