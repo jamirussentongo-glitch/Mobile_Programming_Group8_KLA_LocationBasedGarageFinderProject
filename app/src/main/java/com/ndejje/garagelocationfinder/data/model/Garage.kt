@@ -14,6 +14,8 @@ data class Garage(
     val rating: Float,
     val contact: String,
     val imageUrl: String,
+    val isOpen: Boolean = true,
+    val imageRes: Int? = null,
     val distance: String? = null
 )
 
