@@ -44,6 +44,20 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun updateProfile(name: String, phoneNumber: String, profileImageUri: String?) {
+        viewModelScope.launch {
+            val current = currentUser.value
+            if (current != null) {
+                val updatedUser = current.copy(
+                    name = name,
+                    phoneNumber = phoneNumber,
+                    profileImageUri = profileImageUri
+                )
+                repository.updateUser(updatedUser)
+            }
+        }
+    }
+
     fun logout() {
         repository.logout()
         _authState.value = AuthState.Idle

@@ -30,6 +30,11 @@ class AuthRepository @Inject constructor(
         _currentUser.value = user
     }
 
+    suspend fun updateUser(user: User) {
+        userDao.insertUser(user) // REPLACE strategy handles update
+        _currentUser.value = user
+    }
+
     fun logout() {
         _currentUser.value = null
     }
