@@ -34,10 +34,10 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun signup(name: String, email: String, password: String) {
+    fun signup(name: String, email: String, password: String, phoneNumber: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
-            val newUser = User(email, name, password)
+            val newUser = User(email, name, password, phoneNumber)
             repository.register(newUser)
             _currentUser.value = newUser
             _authState.value = AuthState.Success

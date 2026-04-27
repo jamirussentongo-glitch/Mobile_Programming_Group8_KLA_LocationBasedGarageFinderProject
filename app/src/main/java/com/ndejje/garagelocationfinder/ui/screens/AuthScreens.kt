@@ -1,10 +1,14 @@
 package com.ndejje.garagelocationfinder.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -65,9 +69,15 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
         
         Button(
-            onClick = { viewModel.login(email, password) },
+            onClick = {
+                if (email.isBlank() || password.isBlank()) {
+                    // Local validation or just let the VM handle it. The user requested "all fields should be filled"
+                    return@Button
+                }
+                viewModel.login(email, password)
+            },
             modifier = Modifier.fillMaxWidth(),
-            enabled = authState !is AuthState.Loading
+            enabled = authState !is AuthState.Loading && email.isNotBlank() && password.isNotBlank()
         ) {
             if (authState is AuthState.Loading) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
@@ -90,7 +100,12 @@ fun SignupScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -103,7 +118,8 @@ fun SignupScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -117,11 +133,21 @@ fun SignupScreen(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = phoneNumber,
+            onValueChange = { phoneNumber = it },
+            label = { Text("Phone Number") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -133,10 +159,21 @@ fun SignupScreen(
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
+        Spacer(modifier = Modifier.height(8.dp))
 
-        if (authState is AuthState.Error) {
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            label = { Text("Confirm Password") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        val displayError = errorMessage ?: (if (authState is AuthState.Error) (authState as AuthState.Error).message else null)
+        
+        if (displayError != null) {
             Text(
-                text = (authState as AuthState.Error).message,
+                text = displayError,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -145,7 +182,20 @@ fun SignupScreen(
         Spacer(modifier = Modifier.height(16.dp))
         
         Button(
-            onClick = { viewModel.signup(name, email, password) },
+            onClick = {
+                errorMessage = null
+                when {
+                    name.isBlank() || email.isBlank() || password.isBlank() || phoneNumber.isBlank() || confirmPassword.isBlank() -> {
+                        errorMessage = "Please fill in all fields"
+                    }
+                    password != confirmPassword -> {
+                        errorMessage = "Passwords do not match"
+                    }
+                    else -> {
+                        viewModel.signup(name, email, password, phoneNumber)
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             enabled = authState !is AuthState.Loading
         ) {
