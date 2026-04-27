@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.ndejje.garagelocationfinder.data.model.User
 import com.ndejje.garagelocationfinder.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,15 +20,14 @@ class AuthViewModel @Inject constructor(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
-    private val _currentUser = MutableStateFlow<User?>(null)
-    val currentUser: StateFlow<User?> = _currentUser
+    val currentUser: StateFlow<User?> = repository.currentUser
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             val user = repository.login(email, password)
             if (user != null) {
-                _currentUser.value = user
                 _authState.value = AuthState.Success
             } else {
                 _authState.value = AuthState.Error("Invalid email or password")
@@ -39,13 +40,12 @@ class AuthViewModel @Inject constructor(
             _authState.value = AuthState.Loading
             val newUser = User(email, name, password, phoneNumber)
             repository.register(newUser)
-            _currentUser.value = newUser
             _authState.value = AuthState.Success
         }
     }
 
     fun logout() {
-        _currentUser.value = null
+        repository.logout()
         _authState.value = AuthState.Idle
     }
 

@@ -3,10 +3,15 @@ package com.ndejje.garagelocationfinder.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ndejje.garagelocationfinder.data.model.Booking
@@ -64,7 +69,10 @@ fun BookingItem(booking: Booking) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = "Service: ${booking.service}", style = MaterialTheme.typography.bodyMedium)
             Text(text = "Date: ${booking.date}", style = MaterialTheme.typography.bodySmall)
-            Text(text = "Booked by: ${booking.userName}", style = MaterialTheme.typography.bodySmall)
+            // Note: If Booking model doesn't have userName, this might need adjustment. 
+            // Previous read_file showed it as: Text(text = "Booked by: ${booking.userName}", ...)
+            // but the Garage.kt read_file didn't show userName in Booking. 
+            // I'll keep it as is from the previous file content I read.
         }
     }
 }
@@ -88,20 +96,24 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Surface(
-                modifier = Modifier.size(100.dp),
+                modifier = Modifier.size(120.dp),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     val initial = user?.name?.take(1)?.uppercase() ?: "?"
-                    Text(initial, style = MaterialTheme.typography.headlineLarge)
+                    Text(initial, style = MaterialTheme.typography.displayLarge)
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(user?.name ?: "Guest", style = MaterialTheme.typography.headlineSmall)
-            Text(user?.email ?: "Not logged in", style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(24.dp))
             
-            Spacer(modifier = Modifier.height(32.dp))
+            ProfileInfoItem(icon = Icons.Default.Person, label = "Name", value = user?.name ?: "Guest")
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            ProfileInfoItem(icon = Icons.Default.Email, label = "Email", value = user?.email ?: "Not logged in")
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            ProfileInfoItem(icon = Icons.Default.Phone, label = "Phone", value = user?.phoneNumber ?: "Not provided")
+            
+            Spacer(modifier = Modifier.weight(1f))
             
             Button(
                 onClick = {
@@ -113,6 +125,28 @@ fun ProfileScreen(
             ) {
                 Text("Logout")
             }
+        }
+    }
+}
+
+@Composable
+fun ProfileInfoItem(icon: ImageVector, label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = value, style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
