@@ -46,7 +46,8 @@ fun LoginScreen(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
         Spacer(modifier = Modifier.height(8.dp))
         
@@ -55,13 +56,15 @@ fun LoginScreen(
             onValueChange = { password = it },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
 
         if (authState is AuthState.Error) {
             Text(
                 text = (authState as AuthState.Error).message,
                 color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
@@ -70,24 +73,23 @@ fun LoginScreen(
         
         Button(
             onClick = {
-                if (email.isBlank() || password.isBlank()) {
-                    // Local validation or just let the VM handle it. The user requested "all fields should be filled"
-                    return@Button
+                if (email.isNotBlank() && password.isNotBlank()) {
+                    viewModel.login(email, password)
                 }
-                viewModel.login(email, password)
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = authState !is AuthState.Loading && email.isNotBlank() && password.isNotBlank()
+            enabled = authState !is AuthState.Loading && email.isNotBlank() && password.isNotBlank(),
+            shape = MaterialTheme.shapes.extraLarge
         ) {
             if (authState is AuthState.Loading) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
             } else {
-                Text("Login")
+                Text("Login", style = MaterialTheme.typography.labelLarge)
             }
         }
         
         TextButton(onClick = onSignupClick) {
-            Text("Don't have an account? Sign up")
+            Text("Don't have an account? Sign up", style = MaterialTheme.typography.labelMedium)
         }
     }
 }
@@ -130,7 +132,8 @@ fun SignupScreen(
             value = name,
             onValueChange = { name = it },
             label = { Text("Full Name") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -139,7 +142,8 @@ fun SignupScreen(
             onValueChange = { phoneNumber = it },
             label = { Text("Phone Number") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
         Spacer(modifier = Modifier.height(8.dp))
         
@@ -148,7 +152,8 @@ fun SignupScreen(
             onValueChange = { email = it },
             label = { Text("Email") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
         Spacer(modifier = Modifier.height(8.dp))
         
@@ -157,7 +162,8 @@ fun SignupScreen(
             onValueChange = { password = it },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -166,7 +172,8 @@ fun SignupScreen(
             onValueChange = { confirmPassword = it },
             label = { Text("Confirm Password") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
 
         val displayError = errorMessage ?: (if (authState is AuthState.Error) (authState as AuthState.Error).message else null)
@@ -175,6 +182,7 @@ fun SignupScreen(
             Text(
                 text = displayError,
                 color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
@@ -197,17 +205,18 @@ fun SignupScreen(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = authState !is AuthState.Loading
+            enabled = authState !is AuthState.Loading,
+            shape = MaterialTheme.shapes.extraLarge
         ) {
             if (authState is AuthState.Loading) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
             } else {
-                Text("Sign Up")
+                Text("Sign Up", style = MaterialTheme.typography.labelLarge)
             }
         }
 
         TextButton(onClick = onLoginClick) {
-            Text("Already have an account? Login")
+            Text("Already have an account? Login", style = MaterialTheme.typography.labelMedium)
         }
     }
 }
