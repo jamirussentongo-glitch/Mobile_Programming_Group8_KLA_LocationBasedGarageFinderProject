@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ndejje.garagelocationfinder.data.model.Garage
+import com.ndejje.garagelocationfinder.ui.viewmodel.BookingViewModel
 import com.ndejje.garagelocationfinder.ui.viewmodel.GarageViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,14 +24,15 @@ import com.ndejje.garagelocationfinder.ui.viewmodel.GarageViewModel
 fun GarageDetailScreen(
     garageId: String,
     onBack: () -> Unit,
-    viewModel: GarageViewModel = hiltViewModel()
+    garageViewModel: GarageViewModel = hiltViewModel(),
+    bookingViewModel: BookingViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     var garage by remember { mutableStateOf<Garage?>(null) }
     var showBookingDialog by remember { mutableStateOf(false) }
     
     LaunchedEffect(garageId) {
-        garage = viewModel.getGarageById(garageId)
+        garage = garageViewModel.getGarageById(garageId)
     }
 
     Scaffold(
@@ -98,6 +100,12 @@ fun GarageDetailScreen(
                     services = item.services,
                     onDismiss = { showBookingDialog = false },
                     onConfirm = { name, service ->
+                        bookingViewModel.bookGarage(
+                            garageId = item.id,
+                            garageName = item.name,
+                            userName = name,
+                            service = service
+                        )
                         showBookingDialog = false
                         Toast.makeText(context, "Booking submitted for $service by $name", Toast.LENGTH_LONG).show()
                     }

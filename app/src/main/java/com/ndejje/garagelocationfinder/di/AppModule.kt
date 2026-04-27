@@ -2,6 +2,7 @@ package com.ndejje.garagelocationfinder.di
 
 import android.content.Context
 import androidx.room.Room
+import com.ndejje.garagelocationfinder.data.local.BookingDao
 import com.ndejje.garagelocationfinder.data.local.GarageDao
 import com.ndejje.garagelocationfinder.data.local.GarageDatabase
 import com.ndejje.garagelocationfinder.data.local.UserDao
@@ -27,7 +28,7 @@ object AppModule {
             GarageDatabase::class.java,
             "garage_db"
         )
-        .fallbackToDestructiveMigration() // Added to handle database version changes during development
+        .fallbackToDestructiveMigration()
         .build()
     }
 
@@ -38,10 +39,13 @@ object AppModule {
     fun provideUserDao(db: GarageDatabase): UserDao = db.userDao()
 
     @Provides
+    fun provideBookingDao(db: GarageDatabase): BookingDao = db.bookingDao()
+
+    @Provides
     @Singleton
     fun provideGarageApi(): GarageApi {
         return Retrofit.Builder()
-            .baseUrl("https://api.example.com/") // Mock base URL
+            .baseUrl("https://api.example.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(GarageApi::class.java)
