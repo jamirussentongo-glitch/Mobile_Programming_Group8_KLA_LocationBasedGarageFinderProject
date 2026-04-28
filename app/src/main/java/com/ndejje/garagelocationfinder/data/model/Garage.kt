@@ -14,13 +14,17 @@ data class Garage(
     val rating: Float,
     val contact: String,
     val imageUrl: String,
+    val isOpen: Boolean = true,
+    val imageRes: Int? = null,
     val distance: String? = null
 )
 
+@Entity(tableName = "bookings")
 data class Booking(
     @PrimaryKey val id: String = java.util.UUID.randomUUID().toString(),
     val garageId: String,
     val garageName: String,
+    val userName: String,
     val service: String,
     val date: String,
     val status: String // Pending, Completed, Cancelled

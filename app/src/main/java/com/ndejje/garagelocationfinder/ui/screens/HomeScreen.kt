@@ -1,15 +1,20 @@
 package com.ndejje.garagelocationfinder.ui.screens
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.maps.model.CameraPosition
@@ -24,6 +29,7 @@ fun HomeScreen(
     onGarageClick: (String) -> Unit,
     viewModel: GarageViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val garages by viewModel.garages.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var isMapView by remember { mutableStateOf(false) }
@@ -31,12 +37,25 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Garage Finder") },
-                actions = {
-                    TextButton(onClick = { isMapView = !isMapView }) {
-                        Text(if (isMapView) "Switch to List" else "Switch to Map")
-                    }
-                }
+                title = { Text("Garage Finder") }
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = {
+                    // Launch Google Maps with all garage locations
+                    val gmmIntentUri = Uri.parse("geo:0.3476,32.5825?q=garages")
+                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                    mapIntent.setPackage("com.google.android.apps.maps")
+                    context.startActivity(mapIntent)
+                },
+                icon = { 
+                    Icon(
+                        Icons.Default.LocationOn, 
+                        contentDescription = null
+                    ) 
+                },
+                text = { Text("Show Map") }
             )
         }
     ) { padding ->
@@ -60,9 +79,7 @@ fun HomeScreen(
                 }
             }
 
-            if (isMapView) {
-                MapContent(filteredGarages, onGarageClick)
-            } else {
+            Box(modifier = Modifier.weight(1f)) {
                 ListContent(filteredGarages, onGarageClick)
             }
         }
@@ -94,36 +111,6 @@ fun ListContent(garages: List<Garage>, onGarageClick: (String) -> Unit) {
                     }
                 }
             }
-        }
-    }
-}
-
-@SuppressLint("MissingPermission")
-@Composable
-fun MapContent(garages: List<Garage>, onGarageClick: (String) -> Unit) {
-    val kampala = LatLng(0.3476, 32.5825)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(kampala, 13f)
-    }
-
-    val mapProperties by remember { mutableStateOf(MapProperties(isMyLocationEnabled = true)) }
-    val uiSettings by remember { mutableStateOf(MapUiSettings(myLocationButtonEnabled = true)) }
-
-    GoogleMap(
-        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState,
-        properties = mapProperties,
-        uiSettings = uiSettings
-    ) {
-        garages.forEach { garage ->
-            Marker(
-                state = MarkerState(position = LatLng(garage.latitude, garage.longitude)),
-                title = garage.name,
-                snippet = "Rating: ${garage.rating} | ${garage.services.take(2).joinToString(", ")}",
-                onInfoWindowClick = { marker -> 
-                    onGarageClick(garage.id)
-                }
-            )
         }
     }
 }
