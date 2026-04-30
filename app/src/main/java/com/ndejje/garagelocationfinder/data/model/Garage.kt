@@ -16,7 +16,14 @@ data class Garage(
     val imageUrl: String,
     val isOpen: Boolean = true,
     val imageRes: Int? = null,
-    val distance: String? = null
+    val distance: String? = null,
+    val isVerified: Boolean = false // Added for community trust
+)
+
+@Entity(tableName = "recently_viewed")
+data class RecentlyViewedGarage(
+    @PrimaryKey val id: String,
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "bookings")

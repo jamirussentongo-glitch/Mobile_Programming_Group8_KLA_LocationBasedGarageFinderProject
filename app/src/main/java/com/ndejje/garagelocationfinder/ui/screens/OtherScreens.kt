@@ -226,15 +226,16 @@ fun ProfileScreen(
 ) {
     val user by viewModel.currentUser.collectAsState()
     var isEditing by remember { mutableStateOf(false) }
+    var showPassword by remember { mutableStateOf(false) }
     
     var editedName by remember(user) { mutableStateOf(user?.name ?: "") }
     var editedPhone by remember(user) { mutableStateOf(user?.phoneNumber ?: "") }
-    var selectedImageUri by remember(user) { mutableStateOf(user?.profileImageUri?.let { Uri.parse(it) }) }
+    var selectedImageUri by remember(user) { mutableStateOf<Uri?>(user?.profileImageUri?.let { Uri.parse(it) }) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { selectedImageUri = it }
+        selectedImageUri = uri
     }
 
     Scaffold(
@@ -251,16 +252,18 @@ fun ProfileScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
                 actions = {
-                    if (!isEditing) {
-                        IconButton(onClick = { isEditing = true }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit Profile", tint = Color.White)
-                        }
-                    } else {
-                        IconButton(onClick = { 
-                            viewModel.updateProfile(editedName, editedPhone, selectedImageUri?.toString())
-                            isEditing = false 
-                        }) {
-                            Icon(Icons.Default.Check, contentDescription = "Save", tint = Color.White)
+                    if (user != null) {
+                        if (!isEditing) {
+                            IconButton(onClick = { isEditing = true }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit Profile", tint = Color.White)
+                            }
+                        } else {
+                            IconButton(onClick = { 
+                                viewModel.updateProfile(editedName, editedPhone, selectedImageUri?.toString())
+                                isEditing = false 
+                            }) {
+                                Icon(Icons.Default.Check, contentDescription = "Save", tint = Color.White)
+                            }
                         }
                     }
                 }
@@ -341,7 +344,23 @@ fun ProfileScreen(
                     .padding(16.dp)
                     .fillMaxWidth()
             ) {
-                if (isEditing) {
+                if (user == null) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Not Logged In", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Text("Please log in to view your profile", color = Color.Gray)
+                        }
+                    }
+                } else if (isEditing) {
                     OutlinedTextField(
                         value = editedName,
                         onValueChange = { editedName = it },
@@ -376,29 +395,64 @@ fun ProfileScreen(
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            ProfileInfoItem(icon = Icons.Default.Person, label = "Name", value = user?.name ?: "Guest")
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = Color.LightGray)
-                            ProfileInfoItem(icon = Icons.Default.Email, label = "Email", value = user?.email ?: "Not logged in")
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = Color.LightGray)
+                            Text("Personal Information", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            ProfileInfoItem(icon = Icons.Default.Person, label = "Name", value = user?.name ?: "N/A")
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
+                            ProfileInfoItem(icon = Icons.Default.Email, label = "Email", value = user?.email ?: "N/A")
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
                             ProfileInfoItem(icon = Icons.Default.Phone, label = "Phone", value = user?.phoneNumber ?: "Not provided")
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.height(40.dp))
-                    
-                    Button(
-                        onClick = {
-                            viewModel.logout()
-                            onLogout()
-                        },
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Logout")
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Account Security", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                ProfileInfoItem(
+                                    modifier = Modifier.weight(1f),
+                                    icon = Icons.Default.Lock, 
+                                    label = "Password", 
+                                    value = if (showPassword) (user?.password ?: "") else "••••••••"
+                                )
+                                IconButton(onClick = { showPassword = !showPassword }) {
+                                    Icon(
+                                        imageVector = if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = null,
+                                        tint = Color.Gray
+                                    )
+                                }
+                            }
+                        }
                     }
+                }
+                
+                Spacer(modifier = Modifier.height(40.dp))
+                
+                Button(
+                    onClick = {
+                        viewModel.logout()
+                        onLogout()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (user != null) "Logout" else "Back to Login")
                 }
             }
         }
@@ -406,9 +460,14 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileInfoItem(icon: ImageVector, label: String, value: String) {
+fun ProfileInfoItem(
+    icon: ImageVector, 
+    label: String, 
+    value: String,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically

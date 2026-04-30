@@ -3,8 +3,10 @@ package com.ndejje.garagelocationfinder.di
 import android.content.Context
 import androidx.room.Room
 import com.ndejje.garagelocationfinder.data.local.BookingDao
+import com.ndejje.garagelocationfinder.data.local.EmergencyDao
 import com.ndejje.garagelocationfinder.data.local.GarageDao
 import com.ndejje.garagelocationfinder.data.local.GarageDatabase
+import com.ndejje.garagelocationfinder.data.local.ReviewDao
 import com.ndejje.garagelocationfinder.data.local.UserDao
 import com.ndejje.garagelocationfinder.data.remote.GarageApi
 import dagger.Module
@@ -40,6 +42,12 @@ object AppModule {
 
     @Provides
     fun provideBookingDao(db: GarageDatabase): BookingDao = db.bookingDao()
+
+    @Provides
+    fun provideReviewDao(db: GarageDatabase): ReviewDao = db.reviewDao()
+
+    @Provides
+    fun provideEmergencyDao(db: GarageDatabase): EmergencyDao = db.emergencyDao()
 
     @Provides
     @Singleton
