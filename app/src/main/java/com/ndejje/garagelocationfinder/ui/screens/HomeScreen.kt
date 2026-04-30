@@ -2,6 +2,8 @@ package com.ndejje.garagelocationfinder.ui.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
@@ -35,7 +37,7 @@ fun HomeScreen(
 ) {
     val garages by viewModel.garages.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
-    var isMapView by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -64,14 +66,25 @@ fun HomeScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { isMapView = !isMapView },
+                onClick = { 
+                    val gmmIntentUri = Uri.parse("geo:0,0?q=garages")
+                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                    mapIntent.setPackage("com.google.android.apps.maps")
+                    try {
+                        context.startActivity(mapIntent)
+                    } catch (e: Exception) {
+                        // Fallback if Google Maps app is not installed
+                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=garages"))
+                        context.startActivity(browserIntent)
+                    }
+                },
                 icon = {
                     Icon(
-                        if (isMapView) Icons.Default.List else Icons.Default.LocationOn,
+                        Icons.Default.LocationOn,
                         contentDescription = null
                     )
                 },
-                text = { Text(if (isMapView) "Show List" else "Show Map") },
+                text = { Text("Show Map") },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             )
@@ -99,13 +112,7 @@ fun HomeScreen(
             }
 
             Box(modifier = Modifier.weight(1f)) {
-                Crossfade(targetState = isMapView, label = "view_toggle") { isMap ->
-                    if (isMap) {
-                        MapContent(filteredGarages, onGarageClick, viewModel)
-                    } else {
-                        ListContent(filteredGarages, onGarageClick)
-                    }
-                }
+                ListContent(filteredGarages, onGarageClick)
             }
         }
     }
