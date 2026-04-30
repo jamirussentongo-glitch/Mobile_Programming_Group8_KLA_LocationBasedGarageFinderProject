@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "833924819364",
+    "project_id": "garagelocationfinder",
+    "storage_bucket": "garagelocationfinder.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:833924819364:android:b23d7dd9603309b2e3f931",
+        "android_client_info": {
+          "package_name": "com.ndejje.garagelocationfinder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6m0S-OBsb3US_e_cArBPu4ICsGe5gftc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
