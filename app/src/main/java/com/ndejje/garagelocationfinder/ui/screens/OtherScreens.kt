@@ -3,6 +3,7 @@ package com.ndejje.garagelocationfinder.ui.screens
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -38,6 +39,23 @@ fun BookingsScreen(
     viewModel: BookingViewModel = hiltViewModel()
 ) {
     val bookings by viewModel.bookings.collectAsState()
+    var selectedBookingForRebook by remember { mutableStateOf<Booking?>(null) }
+
+    if (selectedBookingForRebook != null) {
+        RebookDialog(
+            booking = selectedBookingForRebook!!,
+            onDismiss = { selectedBookingForRebook = null },
+            onConfirm = { newService ->
+                viewModel.bookGarage(
+                    garageId = selectedBookingForRebook!!.garageId,
+                    garageName = selectedBookingForRebook!!.garageName,
+                    userName = selectedBookingForRebook!!.userName,
+                    service = newService
+                )
+                selectedBookingForRebook = null
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -54,7 +72,7 @@ fun BookingsScreen(
                 )
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color(0xFFF7F9FC) // Distinct light background for the whole screen
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             // Header summary
@@ -109,10 +127,14 @@ fun BookingsScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp, top = 8.dp)
+                    contentPadding = PaddingValues(bottom = 16.dp, top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     items(bookings) { booking ->
-                        BookingItem(booking)
+                        BookingItem(
+                            booking = booking,
+                            onRebookClick = { selectedBookingForRebook = booking }
+                        )
                     }
                 }
             }
@@ -121,14 +143,20 @@ fun BookingsScreen(
 }
 
 @Composable
-fun BookingItem(booking: Booking) {
+fun BookingItem(
+    booking: Booking,
+    onRebookClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White // White cards to pop against gray background
+        ),
+        border = BorderStroke(0.5.dp, Color.LightGray.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -145,9 +173,9 @@ fun BookingItem(booking: Booking) {
                 
                 Surface(
                     color = when(booking.status.lowercase()) {
-                        "completed" -> Color(0xFF4CAF50).copy(alpha = 0.1f)
-                        "pending" -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
-                        else -> Color.Gray.copy(alpha = 0.1f)
+                        "completed" -> Color(0xFFE8F5E9)
+                        "pending" -> Color(0xFFFFF3E0)
+                        else -> Color(0xFFF5F5F5)
                     },
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -155,7 +183,7 @@ fun BookingItem(booking: Booking) {
                         text = booking.status.uppercase(),
                         color = when(booking.status.lowercase()) {
                             "completed" -> Color(0xFF2E7D32)
-                            "pending" -> MaterialTheme.colorScheme.secondary
+                            "pending" -> Color(0xFFEF6C00)
                             else -> Color.DarkGray
                         },
                         style = MaterialTheme.typography.labelSmall,
@@ -166,38 +194,49 @@ fun BookingItem(booking: Booking) {
             }
             
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
+            HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             Spacer(modifier = Modifier.height(12.dp))
             
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.Build,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = Color.Gray
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = booking.service,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
+            // Enhanced Service Row with better visibility
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Build,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = booking.service,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Default.DateRange,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = booking.date,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -211,11 +250,49 @@ fun BookingItem(booking: Booking) {
                     text = "REBOOK SERVICE →",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.secondary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onRebookClick() }
                 )
             }
         }
     }
+}
+
+@Composable
+fun RebookDialog(
+    booking: Booking,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var service by remember { mutableStateOf(booking.service) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rebook Service") },
+        text = {
+            Column {
+                Text("Garage: ${booking.garageName}", fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = service,
+                    onValueChange = { service = it },
+                    label = { Text("Service Type") },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("e.g. Oil Change, Engine repair") }
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onConfirm(service) }) {
+                Text("Order Now")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -269,16 +346,16 @@ fun ProfileScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         val profileFieldColors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedLabelColor = Color.White,
-            unfocusedLabelColor = Color.White,
-            focusedBorderColor = Color.White,
-            unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
-            focusedLeadingIconColor = Color.White,
-            unfocusedLeadingIconColor = Color.White,
-            focusedContainerColor = MaterialTheme.colorScheme.primary,
-            unfocusedContainerColor = MaterialTheme.colorScheme.primary
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+            unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent
         )
 
         Column(
