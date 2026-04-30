@@ -226,16 +226,15 @@ fun ProfileScreen(
 ) {
     val user by viewModel.currentUser.collectAsState()
     var isEditing by remember { mutableStateOf(false) }
-    var showPassword by remember { mutableStateOf(false) }
     
     var editedName by remember(user) { mutableStateOf(user?.name ?: "") }
     var editedPhone by remember(user) { mutableStateOf(user?.phoneNumber ?: "") }
-    var selectedImageUri by remember(user) { mutableStateOf<Uri?>(user?.profileImageUri?.let { Uri.parse(it) }) }
+    var selectedImageUri by remember(user) { mutableStateOf(user?.profileImageUri?.let { Uri.parse(it) }) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        selectedImageUri = uri
+        uri?.let { selectedImageUri = it }
     }
 
     Scaffold(
@@ -252,18 +251,16 @@ fun ProfileScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
                 actions = {
-                    if (user != null) {
-                        if (!isEditing) {
-                            IconButton(onClick = { isEditing = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit Profile", tint = Color.White)
-                            }
-                        } else {
-                            IconButton(onClick = { 
-                                viewModel.updateProfile(editedName, editedPhone, selectedImageUri?.toString())
-                                isEditing = false 
-                            }) {
-                                Icon(Icons.Default.Check, contentDescription = "Save", tint = Color.White)
-                            }
+                    if (!isEditing) {
+                        IconButton(onClick = { isEditing = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit Profile", tint = Color.White)
+                        }
+                    } else {
+                        IconButton(onClick = { 
+                            viewModel.updateProfile(editedName, editedPhone, selectedImageUri?.toString())
+                            isEditing = false 
+                        }) {
+                            Icon(Icons.Default.Check, contentDescription = "Save", tint = Color.White)
                         }
                     }
                 }
@@ -271,6 +268,19 @@ fun ProfileScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
+        val profileFieldColors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedLabelColor = Color.White,
+            unfocusedLabelColor = Color.White,
+            focusedBorderColor = Color.White,
+            unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
+            focusedLeadingIconColor = Color.White,
+            unfocusedLeadingIconColor = Color.White,
+            focusedContainerColor = MaterialTheme.colorScheme.primary,
+            unfocusedContainerColor = MaterialTheme.colorScheme.primary
+        )
+
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -310,13 +320,13 @@ fun ProfileScreen(
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer
+                        color = MaterialTheme.colorScheme.primary
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
                                 user?.name?.take(1)?.uppercase() ?: "?", 
                                 style = MaterialTheme.typography.displayLarge,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color.White
                             )
                         }
                     }
@@ -344,30 +354,15 @@ fun ProfileScreen(
                     .padding(16.dp)
                     .fillMaxWidth()
             ) {
-                if (user == null) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Not Logged In", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                            Text("Please log in to view your profile", color = Color.Gray)
-                        }
-                    }
-                } else if (isEditing) {
+                if (isEditing) {
                     OutlinedTextField(
                         value = editedName,
                         onValueChange = { editedName = it },
                         label = { Text("Full Name") },
                         modifier = Modifier.fillMaxWidth(),
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                        shape = RoundedCornerShape(12.dp)
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = profileFieldColors
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
@@ -375,84 +370,74 @@ fun ProfileScreen(
                         onValueChange = { editedPhone = it },
                         label = { Text("Phone Number") },
                         modifier = Modifier.fillMaxWidth(),
-                        leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                        shape = RoundedCornerShape(12.dp)
+                        leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = profileFieldColors
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
                         onClick = { isEditing = false },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = Color.White
+                        )
                     ) {
-                        Text("Cancel")
+                        Text("Cancel", color = Color.White)
                     }
                 } else {
-                    Card(
+                    OutlinedTextField(
+                        value = user?.name ?: "Guest",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Full Name") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Personal Information", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            ProfileInfoItem(icon = Icons.Default.Person, label = "Name", value = user?.name ?: "N/A")
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
-                            ProfileInfoItem(icon = Icons.Default.Email, label = "Email", value = user?.email ?: "N/A")
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
-                            ProfileInfoItem(icon = Icons.Default.Phone, label = "Phone", value = user?.phoneNumber ?: "Not provided")
-                        }
-                    }
-
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = profileFieldColors
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    Card(
+                    OutlinedTextField(
+                        value = user?.email ?: "Not logged in",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Email Address") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = profileFieldColors
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = user?.phoneNumber ?: "Not provided",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Phone Number") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = profileFieldColors
+                    )
+                    
+                    Spacer(modifier = Modifier.height(40.dp))
+                    
+                    Button(
+                        onClick = {
+                            viewModel.logout()
+                            onLogout()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = Color.White
+                        )
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Account Security", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                ProfileInfoItem(
-                                    modifier = Modifier.weight(1f),
-                                    icon = Icons.Default.Lock, 
-                                    label = "Password", 
-                                    value = if (showPassword) (user?.password ?: "") else "••••••••"
-                                )
-                                IconButton(onClick = { showPassword = !showPassword }) {
-                                    Icon(
-                                        imageVector = if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                        contentDescription = null,
-                                        tint = Color.Gray
-                                    )
-                                }
-                            }
-                        }
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Logout", color = Color.White)
                     }
-                }
-                
-                Spacer(modifier = Modifier.height(40.dp))
-                
-                Button(
-                    onClick = {
-                        viewModel.logout()
-                        onLogout()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (user != null) "Logout" else "Back to Login")
                 }
             }
         }
@@ -460,14 +445,9 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileInfoItem(
-    icon: ImageVector, 
-    label: String, 
-    value: String,
-    modifier: Modifier = Modifier
-) {
+fun ProfileInfoItem(icon: ImageVector, label: String, value: String) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -488,7 +468,7 @@ fun ProfileInfoItem(
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+            Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
         }
     }
