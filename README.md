@@ -1,7 +1,7 @@
 # Mobile_Programming_Group8_KLA_LocationBasedGarageFinderProject
 
 ## 15-Minute Group Presentation
-YouTube Link: [Watch our presentation](PASTE_YOUR_YOUTUBE_LINK_HERE)
+YouTube Link: [Watch our presentation](https://youtu.be/_bB4GjbMcIE)
 
 ## Team Members
 - SENDI MARTIN — 24/2/306/D/127 — Lead Developer
